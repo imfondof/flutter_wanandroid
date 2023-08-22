@@ -1,5 +1,15 @@
+import 'package:event_bus/event_bus.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_wanandroid/tool/utils/sp_util.dart';
 
+import 'common/application.dart';
+import 'views/login_page.dart';
+
+///代码学习来源：
+///（eventbus、sputil、viewmodel）https://github.com/iceCola7/flutter_wanandroid
+///（多主题）https://github.com/iceCola7/flutter_wanandroid
+///【230818-2.6k】(主题、字体、动画、provider、动画)https://github.com/phoenixsky/fun_android_flutter
 void main() {
   runApp(const MyApp());
 }
@@ -32,7 +42,17 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    Application.eventBus = EventBus();
+    SPUtil.getInstance();
+  }
+
   void _incrementCounter() {
+    Navigator.push(context, CupertinoPageRoute(builder: (context) {
+      return const LoginPage();
+    }));
     setState(() {
       _counter++;
     });
