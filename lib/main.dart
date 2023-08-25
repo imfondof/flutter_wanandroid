@@ -1,9 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:event_bus/event_bus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_wanandroid/tool/utils/sp_util.dart';
 
 import 'common/application.dart';
+import 'data/constant.dart';
+import 'data/dio_util.dart';
 import 'views/login_page.dart';
 
 ///代码学习来源：
@@ -22,10 +25,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      // home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      routes: {
+        "/": (BuildContext context) => const LoginPage(),
+      },
     );
   }
 }
@@ -46,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     Application.eventBus = EventBus();
-    SPUtil.getInstance();
+    init();
   }
 
   void _incrementCounter() {
@@ -85,5 +91,18 @@ class _MyHomePageState extends State<MyHomePage> {
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  Future<void> init() async {
+    await SPUtil.getInstance();
+    String cookie = SPUtil.getString(Constant.keyAppCookie);
+    BaseOptions options = DioUtil.getDefOptions();
+    if (cookie.isNotEmpty) {
+      Map<String, dynamic> headers = {};
+      headers["cookie"] = cookie;
+      options.headers = headers;
+    }
+    HttpConfig config = HttpConfig(options: options);
+    DioUtil().setConfig(config);
   }
 }

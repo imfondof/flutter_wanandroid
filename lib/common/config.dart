@@ -3,7 +3,7 @@ class Config{
 }
 
 class Constants {
-  static const String BASE_URL = "http://www.wanandroid.com/";
+  static const String baseUrl = "http://www.wanandroid.com/";
 
   static const int statusSuccess = 0;
 

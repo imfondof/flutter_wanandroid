@@ -1,8 +1,8 @@
+import 'package:flutter_wanandroid/common/common_index.dart';
 import 'package:flutter_wanandroid/data/apis.dart';
 
 import '../../common/config.dart';
 import '../../models/user_model.dart';
-import '../../tool/utils/sp_util.dart';
 import '../base_resp.dart';
 import '../constant.dart';
 import '../dio_util.dart';
@@ -16,14 +16,13 @@ class WanRepository {
     BaseRes<Map<String, dynamic>> baseResp = await DioUtil()
         .requestRes<Map<String, dynamic>>(Method.post, Apis.login, data: {"username": username, "password": password});
     if (baseResp.code != Constants.statusSuccess) {
-      // return Future.error(baseResp.msg);
       return Future.error(baseResp.msg);
     }
     baseResp.response.headers.forEach((String name, List<String> values) {
       if (name == "set-cookie") {
         String cookie = values.toString();
-        // LogUtil.e("set-cookie: " + cookie);
-        SPUtil.putString(Constant.keyAppToken, cookie);
+        Log.i("set-cookie: $cookie");
+        SPUtil.putString(Constant.keyAppCookie, cookie);
         DioUtil().setCookie(cookie);
         //CacheUtil().setLogin(true);
       }

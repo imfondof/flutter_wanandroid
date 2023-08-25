@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import '../common/common_index.dart';
 import 'base_resp.dart';
 
 /**
@@ -33,7 +34,7 @@ class HttpConfig {
     this.code,
     this.msg,
     this.data,
-    this.options,
+    required this.options,
     this.pem,
     this.pKCSPath,
     this.pKCSPwd,
@@ -52,7 +53,7 @@ class HttpConfig {
   String? data;
 
   /// Options.
-  Options? options;
+  BaseOptions options;
 
   /// 详细使用请查看dio官网 https://github.com/flutterchina/dio/blob/flutter/README-ZH.md#Https证书校验.
   /// PEM证书内容.
@@ -87,7 +88,7 @@ class DioUtil {
   final String _dataKey = "data";
 
   /// Options.
-  final BaseOptions? _options = getDefOptions();
+  final BaseOptions _options = getDefOptions();
 
   // /// PEM证书内容.
   // String _pem;
@@ -126,38 +127,38 @@ class DioUtil {
   }
 
   /// set Config.
-  // void setConfig(HttpConfig config) {
-  //   _statusKey = config.status ?? _statusKey;
-  //   _codeKey = config.code ?? _codeKey;
-  //   _msgKey = config.msg ?? _msgKey;
-  //   _dataKey = config.data ?? _dataKey;
-  //   _mergeOption(config.options);
-  //   _pem = config.pem ?? _pem;
-  //   if (_dio != null) {
-  //     _dio.options = _options;
-  //     if (_pem != null) {
-  //       _dio.onHttpClientCreate = (HttpClient client) {
-  //         client.badCertificateCallback =
-  //             (X509Certificate cert, String host, int port) {
-  //           if (cert.pem == _pem) {
-  //             // 证书一致，则放行
-  //             return true;
-  //           }
-  //           return false;
-  //         };
-  //       };
-  //     }
-  //     if (_pKCSPath != null) {
-  //       _dio.onHttpClientCreate = (HttpClient client) {
-  //         SecurityContext sc = new SecurityContext();
-  //         //file为证书路径
-  //         sc.setTrustedCertificates(_pKCSPath, password: _pKCSPwd);
-  //         HttpClient httpClient = new HttpClient(context: sc);
-  //         return httpClient;
-  //       };
-  //     }
-  //   }
-  // }
+  void setConfig(HttpConfig config) {
+    // _statusKey = config.status ?? _statusKey;
+    // _codeKey = config.code ?? _codeKey;
+    // _msgKey = config.msg ?? _msgKey;
+    // _dataKey = config.data ?? _dataKey;
+    _mergeOption(config.options);
+    // _pem = config.pem ?? _pem;
+    if (_dio != null) {
+      _dio.options = _options;
+      // if (_pem != null) {
+      //   _dio.onHttpClientCreate = (HttpClient client) {
+      //     client.badCertificateCallback =
+      //         (X509Certificate cert, String host, int port) {
+      //       if (cert.pem == _pem) {
+      //         // 证书一致，则放行
+      //         return true;
+      //       }
+      //       return false;
+      //     };
+      //   };
+      // }
+      // if (_pKCSPath != null) {
+      //   _dio.onHttpClientCreate = (HttpClient client) {
+      //     SecurityContext sc = new SecurityContext();
+      //     //file为证书路径
+      //     sc.setTrustedCertificates(_pKCSPath, password: _pKCSPwd);
+      //     HttpClient httpClient = new HttpClient(context: sc);
+      //     return httpClient;
+      //   };
+      // }
+    }
+  }
 
   /// Make http request with options.
   /// [method] The request method.
@@ -166,23 +167,38 @@ class DioUtil {
   /// [options] The request options.
   /// <BaseRespR<T> 返回  code msg data Response.
   Future<BaseRes<T>> requestRes<T>(String method, String path,
-      {data, Options? options, CancelToken? cancelToken}) async {
-    _printPreviousHttpLog(path);
-    Response response =
-        await _dio.request(path, data: data, options: _checkOptions(method, options), cancelToken: cancelToken);
-    _printHttpLog(response);
-    int code;
-    String msg;
-    if (response.statusCode == HttpStatus.ok || response.statusCode == HttpStatus.created) {
-      try {
-        code = (response.data[_codeKey] is String) ? int.tryParse(response.data[_codeKey]) : response.data[_codeKey];
-        msg = response.data[_msgKey];
-        return BaseRes(code, msg, response.data, response);
-      } catch (e) {
-        return Future.error(response.data[_msgKey]);
+      {data, queryParameters, Options? options, CancelToken? cancelToken}) async {
+    _printPreviousHttpLog(
+        "$path ${queryParameters == null ? "" : "queryParameters is $queryParameters"}${data == null ? "" : "data is $data"}");
+    try {
+      Response response = await _dio.request(path,
+          queryParameters: queryParameters,
+          data: data,
+          options: _checkOptions(method, _dio.options),
+          cancelToken: cancelToken);
+      _printHttpLog(response);
+      int code;
+      String msg;
+      if (response.statusCode == HttpStatus.ok || response.statusCode == HttpStatus.created) {
+        try {
+          code = (response.data[_codeKey] is String) ? int.tryParse(response.data[_codeKey]) : response.data[_codeKey];
+          msg = response.data[_msgKey];
+          return BaseRes(code, msg, response.data, response);
+        } catch (e) {
+          return Future.error("data parsing exception...");
+        }
       }
+      return Future.error("statusCode: ${response.statusCode}, service error");
+    } catch (error) {
+      Log.i("error is $error");
+      if (error is DioException) {
+        return Future.error("网络异常_${error.response?.statusCode}，请检查网络连接");
+      }
+      if (error is SocketException) {
+        return Future.error("请检查是否连接网络");
+      }
+      return Future.error("网络异常");
     }
-    return Future.error("解析错误");
   }
 
   /// Make http request with options.
@@ -193,7 +209,7 @@ class DioUtil {
   /// <BaseResp<T> 返回 status code msg data .
   Future<BaseResp<T>> request<T>(String method, String path, {data, Options? options, CancelToken? cancelToken}) async {
     Response response =
-        await _dio.request(path, data: data, options: _checkOptions(method, options), cancelToken: cancelToken);
+        await _dio.request(path, data: data, options: _checkOptions(method, _dio.options), cancelToken: cancelToken);
     _printHttpLog(response);
     String status;
     int code;
@@ -229,10 +245,14 @@ class DioUtil {
   /// [options] The request options.
   /// <BaseRespR<T> 返回 status code msg data  Response.
   Future<BaseRespR<T>> requestR<T>(String method, String path,
-      {data, Options? options, CancelToken? cancelToken}) async {
-    _printPreviousHttpLog(path);
-    Response response =
-        await _dio.request(path, data: data, options: _checkOptions(method, options), cancelToken: cancelToken);
+      {queryParameters, data, Options? options, CancelToken? cancelToken}) async {
+    _printPreviousHttpLog(
+        "$path ${queryParameters == null ? "" : "queryParameters is $queryParameters"}${data == null ? "" : "data is $data"}");
+    Response response = await _dio.request(path,
+        queryParameters: queryParameters,
+        data: data,
+        options: _checkOptions(method, _dio.options),
+        cancelToken: cancelToken);
     _printHttpLog(response);
     String status;
     int code;
@@ -289,26 +309,27 @@ class DioUtil {
   }
 
   /// check Options.
-  Options _checkOptions(method, options) {
-    options ??= Options();
-    options.method = method;
-    return options;
+  Options _checkOptions(method, BaseOptions options) {
+    Options curOptions = Options();
+    curOptions.method = method;
+    curOptions.headers = options.headers;
+    return curOptions;
   }
 
   // /// merge Option.
-  // void _mergeOption(Options opt) {
-  //   _options.method = opt.method ?? _options.method;
-  //   _options.headers = (new Map.from(_options.headers))..addAll(opt.headers);
-  //   _options.baseUrl = opt.baseUrl ?? _options.baseUrl;
-  //   _options.connectTimeout = opt.connectTimeout ?? _options.connectTimeout;
-  //   _options.receiveTimeout = opt.receiveTimeout ?? _options.receiveTimeout;
-  //   _options.responseType = opt.responseType ?? _options.responseType;
-  //   _options.data = opt.data ?? _options.data;
-  //   _options.extra = (new Map.from(_options.extra))..addAll(opt.extra);
-  //   _options.contentType = opt.contentType ?? _options.contentType;
-  //   _options.validateStatus = opt.validateStatus ?? _options.validateStatus;
-  //   _options.followRedirects = opt.followRedirects ?? _options.followRedirects;
-  // }
+  void _mergeOption(BaseOptions opt) {
+    _options.method = opt.method ?? _options.method;
+    _options.headers = (Map.from(_options.headers))..addAll(opt.headers);
+    // _options.baseUrl = opt.baseUrl ?? _options.baseUrl;
+    // _options.connectTimeout = opt.connectTimeout ?? _options.connectTimeout;
+    _options.receiveTimeout = opt.receiveTimeout ?? _options.receiveTimeout;
+    _options.responseType = opt.responseType ?? _options.responseType;
+    // _options.data = opt.data ?? _options.data;
+    // _options.extra = (new Map.from(_options.extra))..addAll(opt.extra);
+    _options.contentType = opt.contentType ?? _options.contentType;
+    _options.validateStatus = opt.validateStatus ?? _options.validateStatus;
+    _options.followRedirects = opt.followRedirects ?? _options.followRedirects;
+  }
 
   /// print Http Log.
   void _printPreviousHttpLog(String path) {
@@ -368,7 +389,7 @@ class DioUtil {
   }
 
   /// get Def Options.
-  static BaseOptions? getDefOptions() {
+  static BaseOptions getDefOptions() {
     BaseOptions options = BaseOptions();
     options.contentType = "application/x-www-form-urlencoded";
     options.connectTimeout = const Duration(seconds: 30);
