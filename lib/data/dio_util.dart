@@ -134,30 +134,32 @@ class DioUtil {
     // _dataKey = config.data ?? _dataKey;
     _mergeOption(config.options);
     // _pem = config.pem ?? _pem;
-    if (_dio != null) {
-      _dio.options = _options;
-      // if (_pem != null) {
-      //   _dio.onHttpClientCreate = (HttpClient client) {
-      //     client.badCertificateCallback =
-      //         (X509Certificate cert, String host, int port) {
-      //       if (cert.pem == _pem) {
-      //         // 证书一致，则放行
-      //         return true;
-      //       }
-      //       return false;
-      //     };
-      //   };
-      // }
-      // if (_pKCSPath != null) {
-      //   _dio.onHttpClientCreate = (HttpClient client) {
-      //     SecurityContext sc = new SecurityContext();
-      //     //file为证书路径
-      //     sc.setTrustedCertificates(_pKCSPath, password: _pKCSPwd);
-      //     HttpClient httpClient = new HttpClient(context: sc);
-      //     return httpClient;
-      //   };
-      // }
-    }
+
+    _dio.options = _options;
+    // if (_dio != null) {
+    //   _dio.options = _options;
+    // if (_pem != null) {
+    //   _dio.onHttpClientCreate = (HttpClient client) {
+    //     client.badCertificateCallback =
+    //         (X509Certificate cert, String host, int port) {
+    //       if (cert.pem == _pem) {
+    //         // 证书一致，则放行
+    //         return true;
+    //       }
+    //       return false;
+    //     };
+    //   };
+    // }
+    // if (_pKCSPath != null) {
+    //   _dio.onHttpClientCreate = (HttpClient client) {
+    //     SecurityContext sc = new SecurityContext();
+    //     //file为证书路径
+    //     sc.setTrustedCertificates(_pKCSPath, password: _pKCSPwd);
+    //     HttpClient httpClient = new HttpClient(context: sc);
+    //     return httpClient;
+    //   };
+    // }
+    // }
   }
 
   /// Make http request with options.
@@ -336,7 +338,7 @@ class DioUtil {
     if (!_isDebug) {
       return;
     }
-    print("----------------Http Log----------------"
+    Log.i("----------------Http Log----------------"
         "\n[path   ]:   $path");
   }
 
@@ -346,14 +348,14 @@ class DioUtil {
       return;
     }
     try {
-      print(
+      Log.i(
           // "----------------Http Log----------------\n"
           "[statusCode]:   ${response.statusCode}"
           "\n[request   ]:   ${_getOptionsStr(response.requestOptions)}");
       _printDataStr("reqdata ", response.requestOptions.data);
       _printDataStr("response", response.data);
     } catch (ex) {
-      print("Http Log" " error......");
+      Log.e("Http Log" " error......");
     }
   }
 
@@ -367,10 +369,10 @@ class DioUtil {
     String da = value.toString();
     while (da.isNotEmpty) {
       if (da.length > 512) {
-        print("[$tag  ]:   ${da.substring(0, 512)}");
+        Log.i("[$tag  ]:   ${da.substring(0, 512)}");
         da = da.substring(512, da.length);
       } else {
-        print("[$tag  ]:   $da");
+        Log.i("[$tag  ]:   $da");
         da = "";
       }
     }

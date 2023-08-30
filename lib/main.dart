@@ -2,12 +2,13 @@ import 'package:dio/dio.dart';
 import 'package:event_bus/event_bus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_wanandroid/tool/utils/sp_util.dart';
+import 'package:flutter_wanandroid/pages/index_page.dart';
+import 'package:flutter_wanandroid/tool/utils/sp_utils.dart';
 
 import 'common/application.dart';
 import 'data/constant.dart';
 import 'data/dio_util.dart';
-import 'views/login_page.dart';
+import 'pages/login_page.dart';
 
 ///代码学习来源：
 ///（eventbus、sputil、viewmodel）https://github.com/iceCola7/flutter_wanandroid
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
       // home: const MyHomePage(title: 'Flutter Demo Home Page'),
       routes: {
         "/": (BuildContext context) => const LoginPage(),
+        "/index": (BuildContext context) => const IndexPage(),
       },
     );
   }
@@ -94,10 +96,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> init() async {
-    await SPUtil.getInstance();
-    String cookie = SPUtil.getString(Constant.keyAppCookie);
+    String? cookie = await SpUtil.getData<String>(Constant.keyAppCookie);
     BaseOptions options = DioUtil.getDefOptions();
-    if (cookie.isNotEmpty) {
+    if (cookie != null && cookie.isNotEmpty) {
       Map<String, dynamic> headers = {};
       headers["cookie"] = cookie;
       options.headers = headers;

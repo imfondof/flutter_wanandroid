@@ -11,7 +11,7 @@ class BaseResp<T> {
 
   @override
   String toString() {
-    StringBuffer sb = new StringBuffer('{');
+    StringBuffer sb = StringBuffer('{');
     sb.write("\"status\":\"$status\"");
     sb.write(",\"code\":$code");
     sb.write(",\"msg\":\"$msg\"");
@@ -33,7 +33,7 @@ class BaseRespR<T> {
 
   @override
   String toString() {
-    StringBuffer sb = new StringBuffer('{');
+    StringBuffer sb = StringBuffer('{');
     sb.write("\"status\":\"$status\"");
     sb.write(",\"code\":$code");
     sb.write(",\"msg\":\"$msg\"");

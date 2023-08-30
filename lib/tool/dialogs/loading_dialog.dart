@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../utils/ThemeUtils.dart';
+import '../utils/theme_utils.dart';
 
 class LoadingDialog extends StatefulWidget {
   String loadingText;
